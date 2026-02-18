@@ -1,0 +1,187 @@
+# Ticket System – Setup & Troubleshooting Log
+
+This document explains the full setup process and the technical issues encountered during the initial project configuration.
+
+---
+
+# Project Initialization
+
+## Stack Selected
+- Java 21
+- Spring Boot 3.2.5
+- Maven
+- MySQL
+- Hibernate (JPA)
+
+Project was created as a Maven Spring Boot application.
+
+---
+
+# Environment Configuration
+
+## Java Setup
+
+Verified Java installation:
+
+```bash
+java --version
+
+result: Your Java version 
+
+Ensured NetBeans and Maven were using JDK 21.
+
+---
+
+Maven Not Recognized (Problem)
+
+Issue:
+Running: mvn -v
+Result: mvn: command not found
+
+Solution:
+
+Downloaded Apache Maven
+
+Added Maven bin folder to Windows PATH environment variable
+
+Restarted terminal
+
+Verification:
+
+mvn -v
+
+--
+
+POM.xml Dependency Errors
+Problem:
+
+Missing dependency versions:
+
+'dependencies.dependency.version' is missing
+Cause:
+
+Spring Boot parent was not properly managing dependency versions.
+
+Fix:
+
+Added correct Spring Boot parent:
+
+<parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.2.5</version>
+</parent>
+
+
+This allowed Spring Boot to manage dependency versions automatically.
+
+--
+
+Annotation Processor Error (Lombok)
+Problem:
+Resolution of annotationProcessorPath dependencies failed
+
+Cause:
+
+Incorrect manual configuration of maven-compiler-plugin.
+
+Fix:
+
+Removed custom annotationProcessor configuration and relied on Spring Boot defaults.
+
+--
+
+DataSource Configuration Failure
+Error:
+Failed to determine a suitable driver class
+
+Cause:
+
+Database URL not configured in application.properties.
+
+Fix:
+
+Created src/main/resources/application.properties
+
+spring.datasource.url=jdbc:mysql://localhost:3306/ticketsystem
+spring.datasource.username=root
+spring.datasource.password=YOUR_PASSWORD
+
+spring.jpa.hibernate.ddl-auto=update
+
+
+After configuration, application started successfully.
+
+--
+
+404 Whitelabel Error
+Issue:
+
+Accessing:
+
+localhost:8080/api/tickets/hello
+
+
+Returned:
+
+Whitelabel Error Page (404)
+
+Cause:
+
+Controller not properly detected or endpoint path mismatch.
+
+Fix:
+
+Created:
+
+@RestController
+@RequestMapping("/api/tickets")
+public class TicketController {
+
+    @GetMapping("/hello")
+    public String hello() {
+        return "Ticket System is running!";
+    }
+}
+
+
+Confirmed successful response in browser.
+
+--
+
+Testing POST Endpoint
+
+Used:
+
+Postman
+
+curl (Git Bash)
+
+Example:
+
+curl -X POST http://localhost:8080/api/tickets \
+-H "Content-Type: application/json" \
+-d '{
+  "title": "First ticket",
+  "description": "Created from curl",
+  "status": "OPEN"
+}'
+
+
+Verified ticket persisted in MySQL.
+
+--
+
+JPA Entity Improvements
+
+Improved Ticket entity lifecycle using:
+
+@PrePersist
+protected void onCreate() {
+    this.createdAt = LocalDateTime.now();
+}
+
+
+This ensures timestamp is automatically set when saving.
+
+

@@ -1,10 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import "./App.css";
+
+import Login from "./Login.jsx";
 import TicketForm from "./components/TicketForm.jsx";
 import TicketEditModal from "./components/TicketEditModal.jsx";
+
 import { getTickets, deleteTicket } from "./services/ticketService.js";
+import { getToken, clearToken } from "./services/api.js";
 
 export default function App() {
+  const [isAuth, setIsAuth] = useState(!!getToken());
+
   const [content, setContent] = useState([]);
   const [pageNumber, setPageNumber] = useState(0);
   const [pageSize, setPageSize] = useState(10);
@@ -12,8 +18,8 @@ export default function App() {
   const [totalElements, setTotalElements] = useState(0);
 
   const [filterStatus, setFilterStatus] = useState("ALL");
-  const [draftTitle, setDraftTitle] = useState("");   
-  const [searchTitle, setSearchTitle] = useState(""); 
+  const [draftTitle, setDraftTitle] = useState("");
+  const [searchTitle, setSearchTitle] = useState("");
 
   const [sortField, setSortField] = useState("createdAt");
   const [sortDir, setSortDir] = useState("desc");
@@ -24,6 +30,19 @@ export default function App() {
   const [error, setError] = useState("");
 
   const sortParam = useMemo(() => `${sortField},${sortDir}`, [sortField, sortDir]);
+
+  function handleLoginSuccess() {
+    setIsAuth(true);
+  }
+
+  function handleLogout() {
+    clearToken();
+    setIsAuth(false);
+
+    setContent([]);
+    setError("");
+    setEditingTicket(null);
+  }
 
   async function loadTickets(
     p = pageNumber,
@@ -44,18 +63,26 @@ export default function App() {
       setTotalPages(data.totalPages ?? 0);
       setTotalElements(data.totalElements ?? 0);
     } catch (e) {
-      setError(e?.message || "Error cargando tickets");
+      const msg = e?.message || "Error cargando tickets";
+      setError(msg);
+
+      if (String(msg).includes("401") || String(msg).includes("403")) {
+        handleLogout();
+      }
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
+    if (!isAuth) return;
     loadTickets(0, pageSize, filterStatus, searchTitle, sortParam);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isAuth]);
 
   useEffect(() => {
+    if (!isAuth) return;
+
     const id = setTimeout(() => {
       setSearchTitle(draftTitle);
       loadTickets(0, pageSize, filterStatus, draftTitle, sortParam);
@@ -63,12 +90,13 @@ export default function App() {
 
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draftTitle]);
+  }, [draftTitle, isAuth]);
 
   useEffect(() => {
+    if (!isAuth) return;
     loadTickets(0, pageSize, filterStatus, searchTitle, sortParam);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterStatus, sortParam]);
+  }, [filterStatus, sortParam, isAuth]);
 
   function onPrev() {
     if (pageNumber > 0) loadTickets(pageNumber - 1, pageSize, filterStatus, searchTitle, sortParam);
@@ -108,13 +136,21 @@ export default function App() {
     }
   }
 
+  if (!isAuth) {
+    return <Login onLogin={handleLoginSuccess} />;
+  }
+
   return (
     <div style={{ padding: 24, maxWidth: 1100, margin: "0 auto" }}>
-      <h1 style={{ marginBottom: 16 }}>Tickets</h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+        <h1 style={{ marginBottom: 16 }}>Tickets</h1>
+        <button onClick={handleLogout} disabled={loading}>
+          Cerrar sesión
+        </button>
+      </div>
 
-      <TicketForm
-        onCreated={() => loadTickets(0, pageSize, filterStatus, searchTitle, sortParam)}
-      />
+      <TicketForm onCreated={() => loadTickets(0, pageSize, filterStatus, searchTitle, sortParam)} />
+
       <div
         style={{
           display: "flex",
@@ -144,11 +180,7 @@ export default function App() {
 
         <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
           Orden:
-          <select
-            value={sortField}
-            onChange={(e) => setSortField(e.target.value)}
-            disabled={loading}
-          >
+          <select value={sortField} onChange={(e) => setSortField(e.target.value)} disabled={loading}>
             <option value="createdAt">Fecha</option>
             <option value="title">Título</option>
             <option value="status">Estado</option>
@@ -158,11 +190,7 @@ export default function App() {
 
         <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
           Dirección:
-          <select
-            value={sortDir}
-            onChange={(e) => setSortDir(e.target.value)}
-            disabled={loading}
-          >
+          <select value={sortDir} onChange={(e) => setSortDir(e.target.value)} disabled={loading}>
             <option value="desc">Desc</option>
             <option value="asc">Asc</option>
           </select>
@@ -172,6 +200,7 @@ export default function App() {
           Limpiar
         </button>
       </div>
+
       <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 12 }}>
         <button onClick={onPrev} disabled={loading || pageNumber === 0}>
           ◀ Anterior
@@ -205,6 +234,7 @@ export default function App() {
       <div style={{ marginBottom: 8 }}>
         Total: <b>{totalElements}</b>
       </div>
+
       <div style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
@@ -221,11 +251,15 @@ export default function App() {
           <tbody>
             {loading ? (
               <tr>
-                <td style={td} colSpan={6}>Cargando...</td>
+                <td style={td} colSpan={6}>
+                  Cargando...
+                </td>
               </tr>
             ) : content.length === 0 ? (
               <tr>
-                <td style={td} colSpan={6}>No hay tickets</td>
+                <td style={td} colSpan={6}>
+                  No hay tickets
+                </td>
               </tr>
             ) : (
               content.map((t) => (
@@ -234,17 +268,15 @@ export default function App() {
                   <td style={td}>{t.title || <i>(sin título)</i>}</td>
                   <td style={td}>
                     {t.description
-                      ? (t.description.length > 40 ? t.description.slice(0, 40) + "..." : t.description)
+                      ? t.description.length > 40
+                        ? t.description.slice(0, 40) + "..."
+                        : t.description
                       : <i>(sin descripción)</i>}
                   </td>
                   <td style={td}>{t.status}</td>
                   <td style={td}>{formatDate(t.createdAt)}</td>
                   <td style={td}>
-                    <button
-                      onClick={() => setEditingTicket(t)}
-                      style={{ marginRight: 8 }}
-                      disabled={loading}
-                    >
+                    <button onClick={() => setEditingTicket(t)} style={{ marginRight: 8 }} disabled={loading}>
                       Editar
                     </button>
 
@@ -262,6 +294,7 @@ export default function App() {
           </tbody>
         </table>
       </div>
+
       <TicketEditModal
         open={!!editingTicket}
         ticket={editingTicket}

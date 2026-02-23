@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { updateTicket } from "../services/ticketService";
+import ticketApi from "../services/ticketService";
 
 export default function TicketEditModal({ open, ticket, onClose, onSaved }) {
   const [title, setTitle] = useState("");
@@ -26,7 +26,7 @@ export default function TicketEditModal({ open, ticket, onClose, onSaved }) {
     setError("");
 
     try {
-      await updateTicket(ticket.id, { title, description, status });
+      await ticketApi.update(ticket.id, { title, description, status });
       onSaved?.();
       onClose?.();
     } catch (err) {
@@ -122,5 +122,5 @@ export default function TicketEditModal({ open, ticket, onClose, onSaved }) {
         </form>
       </div>
     </div>
-  );
+  )
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import ticketApi from "../services/ticketService";
+import { updateTicket } from "../services/ticketService.js";
 
 export default function TicketEditModal({ open, ticket, onClose, onSaved }) {
   const [title, setTitle] = useState("");
@@ -26,7 +26,7 @@ export default function TicketEditModal({ open, ticket, onClose, onSaved }) {
     setError("");
 
     try {
-      await ticketApi.update(ticket.id, { title, description, status });
+      await updateTicket(ticket.id, { title, description, status });
       onSaved?.();
       onClose?.();
     } catch (err) {
@@ -67,32 +67,19 @@ export default function TicketEditModal({ open, ticket, onClose, onSaved }) {
       >
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
           <h2 style={{ margin: 0 }}>Editar Ticket #{ticket.id}</h2>
-          <button onClick={onClose} disabled={loading}>
-            ✕
-          </button>
+          <button onClick={onClose} disabled={loading}>✕</button>
         </div>
 
         <form onSubmit={onSubmit} style={{ marginTop: 14 }}>
           <div style={{ display: "grid", gap: 10 }}>
             <label style={{ display: "grid", gap: 6 }}>
               <span>Título</span>
-              <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                style={{ padding: 10 }}
-                disabled={loading}
-              />
+              <input value={title} onChange={(e) => setTitle(e.target.value)} style={{ padding: 10 }} disabled={loading} />
             </label>
 
             <label style={{ display: "grid", gap: 6 }}>
               <span>Descripción</span>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={5}
-                style={{ padding: 10 }}
-                disabled={loading}
-              />
+              <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={5} style={{ padding: 10 }} disabled={loading} />
             </label>
 
             <label style={{ display: "grid", gap: 6, maxWidth: 240 }}>
@@ -104,23 +91,15 @@ export default function TicketEditModal({ open, ticket, onClose, onSaved }) {
               </select>
             </label>
 
-            {error && (
-              <div style={{ padding: 10, border: "1px solid #ff6b6b", borderRadius: 8 }}>
-                {error}
-              </div>
-            )}
+            {error && <div style={{ padding: 10, border: "1px solid #ff6b6b", borderRadius: 8 }}>{error}</div>}
 
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
-              <button type="button" onClick={onClose} disabled={loading}>
-                Cancelar
-              </button>
-              <button type="submit" disabled={loading}>
-                {loading ? "Guardando..." : "Guardar"}
-              </button>
+              <button type="button" onClick={onClose} disabled={loading}>Cancelar</button>
+              <button type="submit" disabled={loading}>{loading ? "Guardando..." : "Guardar"}</button>
             </div>
           </div>
         </form>
       </div>
     </div>
-  )
+  );
 }

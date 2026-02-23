@@ -1,12 +1,21 @@
 import { apiFetch, setToken, clearToken } from "./api";
 
+export async function register(username, password) {
+  // registra usuario
+  const data = await apiFetch("/api/auth/register", {
+    method: "POST",
+    body: JSON.stringify({ username, password }),
+  });
+
+  return data;
+}
+
 export async function login(username, password) {
   const data = await apiFetch("/api/auth/login", {
     method: "POST",
     body: JSON.stringify({ username, password }),
   });
 
-  
   if (data?.token) {
     setToken(data.token);
   } else {

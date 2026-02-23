@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { login } from "./services/authService";
+import { register } from "./services/authService";
 
-export default function Login({ onLogin, onGoRegister }) {
+export default function Register({ onRegister, onGoLogin }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState("");
@@ -13,10 +13,10 @@ export default function Login({ onLogin, onGoRegister }) {
     setLoading(true);
 
     try {
-      await login(username, password);
-      onLogin?.();
+      await register(username, password); // guarda token en localStorage
+      onRegister?.();
     } catch (err) {
-      setMsg(err?.message || "Error haciendo login");
+      setMsg(err?.message || "Error registrando usuario");
     } finally {
       setLoading(false);
     }
@@ -24,7 +24,7 @@ export default function Login({ onLogin, onGoRegister }) {
 
   return (
     <div style={{ maxWidth: 420, margin: "60px auto", padding: 16 }}>
-      <h2>Login</h2>
+      <h2>Crear cuenta</h2>
 
       <form onSubmit={handleSubmit}>
         <input
@@ -45,20 +45,15 @@ export default function Login({ onLogin, onGoRegister }) {
         />
 
         <button type="submit" disabled={loading} style={{ width: "100%", padding: 10 }}>
-          {loading ? "Entrando..." : "Entrar"}
+          {loading ? "Creando..." : "Crear cuenta"}
         </button>
 
         {msg && <p style={{ marginTop: 10 }}>{msg}</p>}
       </form>
 
       <div style={{ marginTop: 12 }}>
-        <button
-          type="button"
-          onClick={onGoRegister}
-          disabled={loading}
-          style={{ width: "100%", padding: 10 }}
-        >
-          Crear cuenta
+        <button type="button" onClick={onGoLogin} disabled={loading} style={{ width: "100%", padding: 10 }}>
+          Ya tengo cuenta (Login)
         </button>
       </div>
     </div>

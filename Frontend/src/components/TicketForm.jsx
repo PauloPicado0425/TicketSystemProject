@@ -1,5 +1,5 @@
 import { useState } from "react";
-import ticketApi from "../services/ticketService";
+import { createTicket } from "../services/ticketService.js";
 
 export default function TicketForm({ onCreated }) {
   const [title, setTitle] = useState("");
@@ -10,12 +10,11 @@ export default function TicketForm({ onCreated }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
-
     setLoading(true);
     setError("");
 
     try {
-      await ticketApi.create(title, description); 
+      await createTicket({ title, description });
       setTitle("");
       setDescription("");
       onCreated?.();

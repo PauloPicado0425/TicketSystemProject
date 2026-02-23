@@ -29,11 +29,20 @@ export async function apiFetch(path, options = {}) {
     headers,
   });
 
-  const text = await res.text();
-  const data = text ? JSON.parse(text) : null;
+  const text = await res.text().catch(() => "");
+  let data = null;
+
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = text || null; // si no es JSON, guardo el texto
+  }
 
   if (!res.ok) {
-    const msg = data?.message || data?.error || `HTTP ${res.status}`;
+    const msg =
+      (data && typeof data === "object" && (data.message || data.error)) ||
+      (typeof data === "string" && data) ||
+      `HTTP ${res.status}`;
     throw new Error(msg);
   }
 

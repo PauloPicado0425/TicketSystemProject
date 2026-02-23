@@ -18,10 +18,10 @@ export async function getTickets(
   return apiFetch(`/api/tickets?${params.toString()}`);
 }
 
-export async function createTicket(body) {
+export async function createTicket({ title, description }) {
   return apiFetch("/api/tickets", {
     method: "POST",
-    body: JSON.stringify(body),
+    body: JSON.stringify({ title, description }),
   });
 }
 
@@ -37,12 +37,3 @@ export async function deleteTicket(id) {
     method: "DELETE",
   });
 }
-
-const ticketApi = {
-  list: getTickets,
-  create: (title, description) => createTicket({ title, description }),
-  update: updateTicket,
-  remove: deleteTicket,
-};
-
-export default ticketApi;

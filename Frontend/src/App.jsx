@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 
 import Login from "./Login.jsx";
+import Register from "./Register.jsx";
 import TicketForm from "./components/TicketForm.jsx";
 import TicketEditModal from "./components/TicketEditModal.jsx";
 
@@ -10,6 +11,7 @@ import { getToken, clearToken } from "./services/api.js";
 
 export default function App() {
   const [isAuth, setIsAuth] = useState(!!getToken());
+  const [authView, setAuthView] = useState("login"); // "login" | "register"
 
   const [content, setContent] = useState([]);
   const [pageNumber, setPageNumber] = useState(0);
@@ -39,9 +41,20 @@ export default function App() {
     clearToken();
     setIsAuth(false);
 
+    // reset UI state
     setContent([]);
     setError("");
     setEditingTicket(null);
+
+    setAuthView("login");
+    setPageNumber(0);
+    setTotalPages(0);
+    setTotalElements(0);
+    setFilterStatus("ALL");
+    setDraftTitle("");
+    setSearchTitle("");
+    setSortField("createdAt");
+    setSortDir("desc");
   }
 
   async function loadTickets(
@@ -137,7 +150,21 @@ export default function App() {
   }
 
   if (!isAuth) {
-    return <Login onLogin={handleLoginSuccess} />;
+    if (authView === "register") {
+      return (
+        <Register
+          onRegister={handleLoginSuccess}
+          onGoLogin={() => setAuthView("login")}
+        />
+      );
+    }
+
+    return (
+      <Login
+        onLogin={handleLoginSuccess}
+        onGoRegister={() => setAuthView("register")}
+      />
+    );
   }
 
   return (

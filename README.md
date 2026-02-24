@@ -116,7 +116,6 @@ public class TicketController {
     public String hello() {
         return "Ticket System is running!";
     }
-}
 
 ------------- 
 
